@@ -1,0 +1,22 @@
+name: Upload_build_test
+
+on:
+  push:
+    branches-ignore: 
+      - main
+    paths:
+      - 'Frends.GoogleDrive.Upload/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: FrendsPlatform/FrendsTasks/.github/workflows/build_test.yml@main
+    with:
+      workdir: Frends.GoogleDrive.Upload
+      env_var_name_1: GoogleDrive_FolderId
+      env_var_name_2: GoogleDrive_SecretJson
+    secrets:
+      badge_service_api_key: ${{ secrets.BADGE_SERVICE_API_KEY }}
+      test_feed_api_key: ${{ secrets.TASKS_TEST_FEED_API_KEY }}
+      env_var_value_1: ${{ secrets.GOOGLEDRIVE_FOLDERID }}
+      env_var_value_2: ${{ secrets.GOOGLEDRIVE_SECRETJSON }}
