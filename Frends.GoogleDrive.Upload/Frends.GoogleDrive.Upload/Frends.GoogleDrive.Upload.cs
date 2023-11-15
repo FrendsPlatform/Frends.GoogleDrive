@@ -14,12 +14,12 @@ using System.Threading.Tasks;
 namespace Frends.GoogleDrive.Upload;
 
 /// <summary>
-/// Google Drive UploadFile task.
+/// Google Drive Upload Task.
 /// </summary>
 public class GoogleDrive
 {
     /// <summary>
-    /// Upload files to Google Drive.
+    /// Upload objects to Google Drive.
     /// [Documentation](https://tasks.frends.com/tasks/frends-tasks/Frends.GoogleDrive.Upload)
     /// </summary>
     /// <param name="input">Input parameters</param>

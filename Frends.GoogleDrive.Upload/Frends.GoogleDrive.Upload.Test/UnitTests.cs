@@ -3,14 +3,17 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Frends.GoogleDrive.UploadObject.Tests;
+#pragma warning disable CS8604 // Possible null reference argument.
 
 [TestClass]
 public class UnitTests
 {
-    private readonly string? _serviceAccountKeyJSONFile = Environment.GetEnvironmentVariable("GoogleDrive_SecretJson");
+    private readonly string? _googleDrive_CredBase64_Part1 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part1");
+    private readonly string? _googleDrive_CredBase64_Part2 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2");
     private readonly string? _driveFolder = Environment.GetEnvironmentVariable("GoogleDrive_FolderId");
     private Input _input = new();
     private Options _options = new();
@@ -18,9 +21,11 @@ public class UnitTests
     [TestInitialize]
     public void Setup()
     {
+        var credentialsJson = Encoding.ASCII.GetString(Convert.FromBase64String(_googleDrive_CredBase64_Part1 + _googleDrive_CredBase64_Part2));
+
         _input = new()
         {
-            ServiceAccountKeyJSON = _serviceAccountKeyJSONFile,
+            ServiceAccountKeyJSON = credentialsJson,
             FileMask = default,
             SourceDirectory = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "TestFiles"),
             TargetFolderId = _driveFolder,
@@ -49,7 +54,7 @@ public class UnitTests
     [TestMethod]
     public async Task UploadTest_JSONasFile()
     {
-        _input.ServiceAccountKeyJSON = "full path to file here";
+        _input.ServiceAccountKeyJSON = "filepath";
         var result = await Upload.GoogleDrive.Upload(_input, _options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
