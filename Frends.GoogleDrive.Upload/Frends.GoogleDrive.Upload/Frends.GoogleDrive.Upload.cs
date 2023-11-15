@@ -2,7 +2,6 @@
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
-using MimeKit;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -41,12 +40,10 @@ public class GoogleDrive
             foreach (var file in filesToCopy)
             {
                 var success = true;
-
                 var fileMetadata = new Google.Apis.Drive.v3.Data.File
                 {
                     Name = file.Name,
-                    Parents = string.IsNullOrWhiteSpace(input.TargetFolderId) ? null : new string[] { input.TargetFolderId },
-                    MimeType = MimeTypes.GetMimeType(file.Name),
+                    Parents = string.IsNullOrWhiteSpace(input.TargetFolderId) ? null : new string[] { input.TargetFolderId }
                 };
 
                 FilesResource.CreateMediaUpload request;

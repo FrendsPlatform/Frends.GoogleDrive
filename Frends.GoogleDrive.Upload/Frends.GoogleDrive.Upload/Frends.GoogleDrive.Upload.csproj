@@ -23,7 +23,6 @@
   
   <ItemGroup>
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.59.0.2922" />
-    <PackageReference Include="MimeKit" Version="4.3.0" />
   </ItemGroup>
 
 </Project>
