@@ -35,7 +35,7 @@ public class GoogleDrive
         {
             InputCheck(input.ServiceAccountKeyJSON, input.SourceDirectory);
             var filesToCopy = GetFileInfo(input, options);
-            service = CreateDriveService(input);
+            service = await CreateDriveService(input, cancellationToken);
 
             foreach (var file in filesToCopy)
             {
@@ -88,16 +88,16 @@ public class GoogleDrive
             throw new ArgumentException(@"Source path not found.", $"{nameof(sourceDirectory)} Value:{sourceDirectory}");
     }
 
-    private static DriveService CreateDriveService(Input input)
+    private static async Task<DriveService> CreateDriveService(Input input, CancellationToken cancellationToken)
     {
         byte[] byteArray;
         if (File.Exists(input.ServiceAccountKeyJSON))
-            byteArray = File.ReadAllBytes(input.ServiceAccountKeyJSON);
+            byteArray = await File.ReadAllBytesAsync(input.ServiceAccountKeyJSON, cancellationToken:cancellationToken);
         else
             byteArray = Encoding.UTF8.GetBytes(input.ServiceAccountKeyJSON);
 
         using var stream = new MemoryStream(byteArray);
-        GoogleCredential credential = GoogleCredential.FromStream(stream).CreateScoped(DriveService.ScopeConstants.Drive);
+        GoogleCredential credential = GoogleCredential.FromStreamAsync(stream, cancellationToken: cancellationToken).Result.CreateScoped(DriveService.ScopeConstants.Drive);
         var service = new DriveService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credential,

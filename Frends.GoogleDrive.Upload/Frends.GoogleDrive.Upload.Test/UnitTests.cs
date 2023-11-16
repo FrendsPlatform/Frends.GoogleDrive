@@ -117,8 +117,8 @@ public class UnitTests
     public async Task UploadTest_InvalidJSON_Throw()
     {
         _input.ServiceAccountKeyJSON = "NoJsonHere";
-        var result = await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await Upload.GoogleDrive.Upload(_input, _options, default));
-        Assert.AreEqual("Error deserializing JSON credential data.", result.Message);
+        var result = await Assert.ThrowsExceptionAsync<AggregateException>(async () => await Upload.GoogleDrive.Upload(_input, _options, default));
+        Assert.AreEqual("One or more errors occurred. (Error deserializing JSON credential data.)", result.Message);
     }
 
     [TestMethod]
