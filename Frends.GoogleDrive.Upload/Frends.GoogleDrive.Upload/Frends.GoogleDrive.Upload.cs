@@ -92,7 +92,7 @@ public class GoogleDrive
     {
         byte[] byteArray;
         if (File.Exists(input.ServiceAccountKeyJSON))
-            byteArray = await File.ReadAllBytesAsync(input.ServiceAccountKeyJSON, cancellationToken:cancellationToken);
+            byteArray = await File.ReadAllBytesAsync(input.ServiceAccountKeyJSON, cancellationToken: cancellationToken);
         else
             byteArray = Encoding.UTF8.GetBytes(input.ServiceAccountKeyJSON);
 
