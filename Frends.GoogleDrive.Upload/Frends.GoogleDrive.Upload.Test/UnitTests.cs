@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Frends.GoogleDrive.UploadObject.Tests;
+namespace Frends.GoogleDrive.Upload.Tests;
 #pragma warning disable CS8604 // Possible null reference argument.
 
 [TestClass]
