@@ -5,6 +5,7 @@ Frends Tasks for Google Drive operations.
 # Tasks
 
 - [Frends.GoogleDrive.Upload](Frends.GoogleDrive.Upload/README.md)
+- [Frends.GoogleDrive.Download](Frends.GoogleDrive.Download/README.md)
 
 # Contributing
 When contributing to this repository, please first discuss the change you wish to make via issue, email, or any other method with the owners of this repository before making a change.

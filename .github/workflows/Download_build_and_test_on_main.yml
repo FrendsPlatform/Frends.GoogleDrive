@@ -1,0 +1,21 @@
+name: Download_build_main
+
+on:
+  push:
+    branches:    
+      - main
+    paths:
+      - 'Frends.GoogleDrive.Download/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: FrendsPlatform/FrendsTasks/.github/workflows/build_main.yml@main
+    with:
+      workdir: Frends.GoogleDrive.Download
+      env_var_name_1: GoogleDrive_CredBase64_Part1
+      env_var_name_2: GoogleDrive_CredBase64_Part2
+    secrets:
+      badge_service_api_key: ${{ secrets.BADGE_SERVICE_API_KEY }}
+      env_var_value_1: ${{ secrets.GOOGLEDRIVE_CREDBASE64_PART1 }}
+      env_var_value_2: ${{ secrets.GOOGLEDRIVE_CREDBASE64_PART2 }}
