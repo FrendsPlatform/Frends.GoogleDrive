@@ -4,6 +4,7 @@ Frends Tasks for Google Drive operations.
 
 # Tasks
 
+- [Frends.GoogleDrive.List](Frends.GoogleDrive.List/README.md)
 - [Frends.GoogleDrive.Upload](Frends.GoogleDrive.Upload/README.md)
 - [Frends.GoogleDrive.Download](Frends.GoogleDrive.Download/README.md)
 
