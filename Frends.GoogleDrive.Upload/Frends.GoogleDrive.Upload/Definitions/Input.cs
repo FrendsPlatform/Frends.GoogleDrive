@@ -17,7 +17,8 @@ public class Input
 
     /// <summary>
     /// Windows-style filemask. Empty field = all objects (*).
-    /// If you want to upload only one file, define exact filename as filemask. Consider using .zip (for example) when uploading multiple objects at the same time.
+    /// If you want to upload only one file, define exact filename as filemask.
+    /// Consider using .zip (for example) when uploading multiple objects at the same time.
     /// </summary>
     /// <example>*.* , ?_file.*, foo_*.txt, singlefile.txt</example>
     [DisplayFormat(DataFormatString = "Text")]
@@ -32,7 +33,8 @@ public class Input
     public string TargetFolderId { get; set; }
 
     /// <summary>
-    /// The JSON service account key that one can generate in the Google Cloud portal.
+    /// The JSON service account key generated in the Google Cloud portal.
+    /// Value can be either JSON string or full filepath to JSON file.
     /// </summary>
     /// <example>
     /// {
@@ -47,6 +49,8 @@ public class Input
     ///      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     ///      "client_x509_cert_url": "https://www....nt.com"
     /// }
+    /// ,
+    /// C:\temp\ServiceAccountKeyJSON.json
     /// </example>
     [DisplayFormat(DataFormatString = "Text")]
     [PasswordPropertyText]
