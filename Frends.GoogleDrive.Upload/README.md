@@ -1,5 +1,5 @@
 # Frends.GoogleDrive.Upload
-Frends Tasks for uploading objects to an Google Drive.
+Frends Tasks for uploading objects to Google Drive.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT) 
 [![Build](https://github.com/FrendsPlatform/Frends.GoogleDrive/actions/workflows/Upload_build_and_test_on_main.yml/badge.svg)](https://github.com/FrendsPlatform/Frends.GoogleDrive/actions)

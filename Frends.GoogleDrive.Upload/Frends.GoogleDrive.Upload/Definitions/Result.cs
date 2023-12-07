@@ -22,7 +22,7 @@ public class Result
     /// <summary>
     /// Gets error message.
     /// </summary>
-    /// <example>An error occured...</example>
+    /// <example>{ {"An error occured..."}, {"An error occured..."} }</example>
     public List<dynamic> ErrorMessage { get; private set; }
 
     internal Result(bool success, List<UploadResult> data, List<dynamic> errorMessage)
