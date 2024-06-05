@@ -35,6 +35,29 @@ public class UnitTests
         };
     }
 
+    [TestMethod]
+    [Ignore("Local testing only, requires shared drive setup.")]
+    public async Task DownloadFromSharedDriveTest()
+    {
+        var input = new Input
+        {
+            ServiceAccountKeyJSON = "",
+            FileQuery = "",
+            DestinationDirectory = _destinationFolder,
+            IncludeSharedDrives = true
+        };
+
+        var options = new Options
+        {
+            CreateDestinationFolder = true,
+            ThrowErrorOnFailure = true
+        };
+
+        var result = await GoogleDrive.Download(input, options, default);
+        Assert.IsTrue(result.Success);
+        Assert.IsTrue(result.Data.Any(x => x.DownloadedFilename.Equals("my-file.pdf")), "Testitiedosto.txt not found");
+    }
+
     [TestCleanup]
     public void CleanUp()
     {
