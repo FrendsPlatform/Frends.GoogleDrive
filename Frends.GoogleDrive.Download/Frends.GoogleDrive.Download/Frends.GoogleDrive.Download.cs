@@ -142,11 +142,11 @@ public class GoogleDrive
         fileListRequest.Fields = "nextPageToken, files(id, kind, name, size, version, createdTime)";
         fileListRequest.Q = input.FileQuery;
         fileListRequest.PageSize = 1000;
-        
+
         // shared drives support
         fileListRequest.SupportsAllDrives = input.IncludeSharedDrives;
         fileListRequest.IncludeItemsFromAllDrives = input.IncludeSharedDrives;
-        
+
         var ret = fileListRequest.Execute();
         return ret.Files;
     }

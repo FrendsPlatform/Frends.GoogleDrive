@@ -44,7 +44,7 @@ public class Input
     [DisplayFormat(DataFormatString = "Text")]
     [PasswordPropertyText]
     public string ServiceAccountKeyJSON { get; set; }
-    
+
     /// <summary>
     /// Whether to include shared drives in the search.
     /// </summary>
