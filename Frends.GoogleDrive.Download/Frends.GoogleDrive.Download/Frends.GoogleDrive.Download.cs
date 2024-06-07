@@ -35,7 +35,7 @@ public class GoogleDrive
         {
             InputCheck(input.ServiceAccountKeyJSON, input.DestinationDirectory, options.CreateDestinationFolder);
             service = await CreateDriveService(input, cancellationToken);
-            var files = GetFileList(service, input);
+            var files = await GetFileList(service, input);
             var success = true;
 
             if (files != null && files.Count > 0)
@@ -43,7 +43,7 @@ public class GoogleDrive
                 foreach (var file in files)
                 {
                     // Skip over folders
-                    if (file.Kind.Equals("drive#file") && file.Size is 0 or null)
+                    if (file.MimeType == "application/vnd.google-apps.folder")
                         continue;
                     FilesResource.GetRequest fileRequest = service.Files.Get(file.Id);
                     FileStream fileStream = new(
@@ -136,10 +136,10 @@ public class GoogleDrive
         return service;
     }
 
-    private static IList<Google.Apis.Drive.v3.Data.File> GetFileList(DriveService service, Input input)
+    private static async Task<IList<Google.Apis.Drive.v3.Data.File>> GetFileList(DriveService service, Input input)
     {
         FilesResource.ListRequest fileListRequest = service.Files.List();
-        fileListRequest.Fields = "nextPageToken, files(id, kind, name, size, version, createdTime)";
+        fileListRequest.Fields = "nextPageToken, files(id, kind, name, size, version, createdTime, mimeType)";
         fileListRequest.Q = input.FileQuery;
         fileListRequest.PageSize = 1000;
 
@@ -147,7 +147,7 @@ public class GoogleDrive
         fileListRequest.SupportsAllDrives = input.IncludeSharedDrives;
         fileListRequest.IncludeItemsFromAllDrives = input.IncludeSharedDrives;
 
-        var ret = fileListRequest.Execute();
+        var ret = await fileListRequest.ExecuteAsync();
         return ret.Files;
     }
 }
