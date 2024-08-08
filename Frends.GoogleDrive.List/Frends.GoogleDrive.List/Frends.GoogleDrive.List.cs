@@ -38,7 +38,7 @@ public class GoogleDrive
             var files = await GetFileList(service, input);
             var fileDict = new Dictionary<string, object>();
 
-            foreach (var file in files) 
+            foreach (var file in files)
             {
                 // Skip over folders
                 if (file.MimeType == "application/vnd.google-apps.folder")
