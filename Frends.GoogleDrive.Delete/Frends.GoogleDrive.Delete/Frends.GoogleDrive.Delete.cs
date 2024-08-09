@@ -34,12 +34,17 @@ public class GoogleDrive
         {
             InputCheck(input);
             service = await CreateDriveService(input, cancellationToken);
-            var files = GetFileList(service, input.FileQuery);
+            var files = await GetFileList(service, input);
 
             if (files != null && files.Count > 0)
                 foreach (var file in files)
                 {
-                    await service.Files.Delete(file.Id).ExecuteAsync(cancellationToken);
+                    var deleteRequest = service.Files.Delete(file.Id);
+
+                    // shared drives support
+                    deleteRequest.SupportsAllDrives = input.IncludeSharedDrives;
+                    
+                    await deleteRequest.ExecuteAsync(cancellationToken);
                     resultList.Add(new DeleteResult(file.Id, file.Name));
                 }
         }
@@ -80,11 +85,18 @@ public class GoogleDrive
         return service;
     }
 
-    private static IList<Google.Apis.Drive.v3.Data.File> GetFileList(DriveService service, string fileQuery)
+    private static async Task<IList<Google.Apis.Drive.v3.Data.File>> GetFileList(DriveService service, Input input)
     {
         FilesResource.ListRequest fileListRequest = service.Files.List();
-        fileListRequest.Fields = "nextPageToken, files(id, name, size, version, createdTime)";
-        fileListRequest.Q = fileQuery;
-        return fileListRequest.Execute().Files;
+        fileListRequest.Fields = "nextPageToken, files(id, kind, name, size, version, createdTime, mimeType)";
+        fileListRequest.Q = input.FileQuery;
+        fileListRequest.PageSize = 1000;
+
+        // shared drives support
+        fileListRequest.SupportsAllDrives = input.IncludeSharedDrives;
+        fileListRequest.IncludeItemsFromAllDrives = input.IncludeSharedDrives;
+        
+        var ret = await fileListRequest.ExecuteAsync();
+        return ret.Files;
     }
 }
