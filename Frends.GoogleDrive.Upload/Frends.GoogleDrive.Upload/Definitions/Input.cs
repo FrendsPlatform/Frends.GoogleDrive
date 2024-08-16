@@ -55,4 +55,11 @@ public class Input
     [DisplayFormat(DataFormatString = "Text")]
     [PasswordPropertyText]
     public string ServiceAccountKeyJSON { get; set; }
+
+    /// <summary>
+    /// Whether to enable support for shared drives.
+    /// </summary>
+    /// <example>false</example>
+    [DefaultValue(false)]
+    public bool IncludeSharedDrives { get; set; }
 }

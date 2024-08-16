@@ -51,7 +51,7 @@ public class GoogleDrive
                 {
                     request = service.Files.Create(fileMetadata, stream, null);
                     request.Fields = "id";
-                    request.SupportsAllDrives = true;
+                    request.SupportsAllDrives = input.IncludeSharedDrives;
 
                     var results = await request.UploadAsync(cancellationToken);
 
