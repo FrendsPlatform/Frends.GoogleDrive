@@ -29,8 +29,7 @@ public class UnitTests
         _input = new()
         {
             ServiceAccountKeyJSON = credentialsJson,
-            FileQuery = null,
-            IncludeSharedDrives = true
+            FileQuery = null
         };
     }
 

@@ -43,7 +43,7 @@ public class GoogleDrive
 
                     // shared drives support
                     deleteRequest.SupportsAllDrives = input.IncludeSharedDrives;
-                    
+
                     await deleteRequest.ExecuteAsync(cancellationToken);
                     resultList.Add(new DeleteResult(file.Id, file.Name));
                 }
@@ -95,7 +95,7 @@ public class GoogleDrive
         // shared drives support
         fileListRequest.SupportsAllDrives = input.IncludeSharedDrives;
         fileListRequest.IncludeItemsFromAllDrives = input.IncludeSharedDrives;
-        
+
         var ret = await fileListRequest.ExecuteAsync();
         return ret.Files;
     }
