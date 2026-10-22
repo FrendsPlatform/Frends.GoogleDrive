@@ -25,8 +25,15 @@ public class Result
     /// <example>{ "An error occured...", "Another error occured" }</example>
     public List<dynamic> ErrorMessage { get; private set; }
 
-    internal Result(bool success, List<DownloadResult> data, List<dynamic> errorMessage)
+    /// <summary>
+    /// Error details. Null when Success is true.
+    /// </summary>
+    /// <example>null</example>
+    public Error Error { get; private set; }
+
+    internal Result(bool success, List<DownloadResult> data, List<dynamic> errorMessage, Error error = null)
     {
+        Error = error;
         Success = success;
         Data = data;
         ErrorMessage = errorMessage;

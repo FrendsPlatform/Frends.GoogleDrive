@@ -1,4 +1,5 @@
 ﻿using Frends.GoogleDrive.Download.Definitions;
+using Frends.GoogleDrive.Download.Helpers;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
@@ -15,7 +16,7 @@ namespace Frends.GoogleDrive.Download;
 /// <summary>
 /// Google Drive Download Task.
 /// </summary>
-public class GoogleDrive
+public static class GoogleDrive
 {
     /// <summary>
     /// Download objects from Google Drive.
@@ -24,7 +25,7 @@ public class GoogleDrive
     /// <param name="input">Input parameters</param>
     /// <param name="options">Options parameters.</param>
     /// <param name="cancellationToken">Token received from Frends to cancel this Task.</param>
-    /// <returns>Object { bool Success, List&lt;DownloadResult&gt; Data, List&lt;dynamic&gt; ErrorMessage }</returns>
+    /// <returns>Object { bool Success, List&lt;DownloadResult&gt; Data, List&lt;dynamic&gt; ErrorMessage, Error Error }</returns>
     public static async Task<Result> Download([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
     {
         var resultList = new List<DownloadResult>();
@@ -92,9 +93,9 @@ public class GoogleDrive
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            return ex.Handle(options);
         }
         finally
         {
