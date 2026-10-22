@@ -1,4 +1,5 @@
-﻿using Frends.GoogleDrive.Delete.Definitions;
+using Frends.GoogleDrive.Delete.Definitions;
+using Frends.GoogleDrive.Delete.Helpers;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
@@ -15,7 +16,7 @@ namespace Frends.GoogleDrive.Delete;
 /// <summary>
 /// Google Drive Delete Task.
 /// </summary>
-public class GoogleDrive
+public static class GoogleDrive
 {
     /// <summary>
     /// Permanently deletes a file owned by the user without moving it to the trash. 
@@ -23,9 +24,10 @@ public class GoogleDrive
     /// [Documentation](https://tasks.frends.com/tasks/frends-tasks/Frends.GoogleDrive.Delete)
     /// </summary>
     /// <param name="input">Input parameters</param>
+    /// <param name="options">Additional parameters</param>
     /// <param name="cancellationToken">Token received from Frends to cancel this Task.</param>
-    /// <returns>Object { bool Success, List&lt;DeleteResult&gt; Data }</returns>
-    public static async Task<Result> Delete([PropertyTab] Input input, CancellationToken cancellationToken)
+    /// <returns>Object { bool Success, List&lt;DeleteResult&gt; Data, Object Error { string Message, Exception AdditionalInfo } }</returns>
+    public static async Task<Result> Delete([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
     {
         var resultList = new List<DeleteResult>();
         DriveService service = null;
@@ -43,9 +45,9 @@ public class GoogleDrive
                     resultList.Add(new DeleteResult(file.Id, file.Name));
                 }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            return ex.Handle(options);
         }
         finally
         {
