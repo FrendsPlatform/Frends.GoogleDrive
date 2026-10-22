@@ -36,5 +36,6 @@ public class Input
     /// </example>
     [DisplayFormat(DataFormatString = "Text")]
     [PasswordPropertyText]
+    [Required(ErrorMessage = "Service account key missing.")]
     public string ServiceAccountKeyJSON { get; set; }
 }
