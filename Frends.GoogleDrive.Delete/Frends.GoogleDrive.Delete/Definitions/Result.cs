@@ -8,20 +8,20 @@ namespace Frends.GoogleDrive.Delete.Definitions;
 public class Result
 {
     /// <summary>
-    /// Gets a value indicating whether process was executed successfully.
+    /// Indicates if the task completed successfully.
     /// </summary>
     /// <example>true</example>
-    public bool Success { get; private set; }
+    public bool Success { get; set; }
 
     /// <summary>
     /// List of deleted items.
     /// </summary>
-    /// <example>{ {"id", "filename"}, {"id", filename"} }</example>
-    public List<DeleteResult> Data { get; private set; }
+    /// <example>[ { "FileId": "1rGpAzFfw2zDSk8lRGYDafwkxxtw_N7fY", "Filename": "test.txt" } ]</example>
+    public List<DeleteResult> Data { get; set; }
 
-    internal Result(bool success, List<DeleteResult> data)
-    {
-        Success = success;
-        Data = data;
-    }
+    /// <summary>
+    /// Error that occurred during task execution.
+    /// </summary>
+    /// <example>object { string Message, Exception AdditionalInfo }</example>
+    public Error Error { get; set; }
 }

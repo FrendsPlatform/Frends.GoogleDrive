@@ -1,10 +1,11 @@
-using Frends.GoogleDrive.Delete.Definitions;
+﻿using Frends.GoogleDrive.Delete.Definitions;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -38,13 +39,13 @@ public class UnitTests
     {
         _input.ServiceAccountKeyJSON = Encoding.ASCII.GetString(Convert.FromBase64String(_googleDrive_CredBase64_Part1 + _googleDrive_CredBase64_Part2));
         _input.FileQuery = null;
-        await GoogleDrive.Delete(_input, default);
+        await GoogleDrive.Delete(_input, new Options(), default);
     }
 
     [TestMethod]
     public async Task DeleteTest_ALL_Success()
     {
-        var result = await GoogleDrive.Delete(_input, default);
+        var result = await GoogleDrive.Delete(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
         Assert.IsTrue(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
@@ -57,7 +58,7 @@ public class UnitTests
     public async Task DeleteTest_JSONasFile()
     {
         _input.ServiceAccountKeyJSON = "filepath";
-        var result = await GoogleDrive.Delete(_input, default);
+        var result = await GoogleDrive.Delete(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
         Assert.IsTrue(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
@@ -69,7 +70,7 @@ public class UnitTests
     public async Task DeleteTest_JPG_Success()
     {
         _input.FileQuery = $"name = 'test-photograph.jpg'";
-        var result = await GoogleDrive.Delete(_input, default);
+        var result = await GoogleDrive.Delete(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, result.Data.Count);
         Assert.IsFalse(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
@@ -81,7 +82,7 @@ public class UnitTests
     public async Task DeleteTest_FileDoesntExists_Success()
     {
         _input.FileQuery = $"name = 'no file'";
-        var result = await GoogleDrive.Delete(_input, default);
+        var result = await GoogleDrive.Delete(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(0, result.Data.Count);
         Assert.IsFalse(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
@@ -93,15 +94,15 @@ public class UnitTests
     public async Task DeleteTest_MissingJSON_Throw()
     {
         _input.ServiceAccountKeyJSON = null;
-        var result = await Assert.ThrowsExceptionAsync<ArgumentException>(async () => await GoogleDrive.Delete(_input, default));
-        Assert.AreEqual("Service account key missing. (Parameter 'ServiceAccountKeyJSON')", result.Message);
+        var result = await Assert.ThrowsExceptionAsync<ValidationException>(async () => await GoogleDrive.Delete(_input, new Options(), default));
+        Assert.AreEqual("Validation failed:\n\nService account key missing.", result.Message);
     }
 
     [TestMethod]
     public async Task DeleteTest_InvalidJSON_Throw()
     {
         _input.ServiceAccountKeyJSON = "NoJsonHere";
-        var result = await Assert.ThrowsExceptionAsync<AggregateException>(async () => await GoogleDrive.Delete(_input, default));
+        var result = await Assert.ThrowsExceptionAsync<AggregateException>(async () => await GoogleDrive.Delete(_input, new Options(), default));
         Assert.AreEqual("One or more errors occurred. (Error deserializing JSON credential data.)", result.Message);
     }
 
