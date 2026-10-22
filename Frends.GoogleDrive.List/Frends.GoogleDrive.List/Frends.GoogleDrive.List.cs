@@ -1,4 +1,5 @@
 ﻿using Frends.GoogleDrive.List.Definitions;
+using Frends.GoogleDrive.List.Helpers;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
@@ -16,24 +17,25 @@ namespace Frends.GoogleDrive.List;
 /// <summary>
 /// Google Drive List Task.
 /// </summary>
-public class GoogleDrive
+public static class GoogleDrive
 {
     /// <summary>
     /// List files in Google Drive.
     /// [Documentation](https://tasks.frends.com/tasks/frends-tasks/Frends.GoogleDrive.List)
     /// </summary>
     /// <param name="input">Input parameters</param>
+    /// <param name="options">Additional parameters.</param>
     /// <param name="cancellationToken">Token received from Frends to cancel this Task.</param>
-    /// <returns>Object { bool Success, string Data }</returns>
-    public static async Task<Result> List([PropertyTab] Input input, CancellationToken cancellationToken)
+    /// <returns>Object { bool Success, string Data, Object Error { string Message, Exception AdditionalInfo } }</returns>
+    public static async Task<Result> List([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(input.ServiceAccountKeyJSON))
-            throw new ArgumentException(@"Service account key missing.", nameof(input.ServiceAccountKeyJSON));
-
         DriveService service = null;
         var json = string.Empty;
         try
         {
+            if (string.IsNullOrWhiteSpace(input.ServiceAccountKeyJSON))
+                throw new ArgumentException(@"Service account key missing.", nameof(input.ServiceAccountKeyJSON));
+
             service = await CreateDriveService(input, cancellationToken);
             var files = await GetFileList(service, input);
             var fileDict = new Dictionary<string, object>();
@@ -49,9 +51,9 @@ public class GoogleDrive
 
             json = JsonConvert.SerializeObject(fileDict);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            return ex.Handle(options);
         }
         finally
         {

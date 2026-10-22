@@ -27,7 +27,7 @@ public class UnitTests
     [TestMethod]
     public async Task ListTest_ALL_Success()
     {
-        var result = await GoogleDrive.List(_input, default);
+        var result = await GoogleDrive.List(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.IsNotNull(result.Data);
     }
@@ -37,7 +37,7 @@ public class UnitTests
     public async Task ListTest_JSONasFile()
     {
         _input.ServiceAccountKeyJSON = "filepath";
-        var result = await GoogleDrive.List(_input, default);
+        var result = await GoogleDrive.List(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.IsNotNull(result.Data);
     }
@@ -46,7 +46,7 @@ public class UnitTests
     public async Task ListTest_JPG_Success()
     {
         _input.FileQuery = $"name = 'test-photograph.jpg'";
-        var result = await GoogleDrive.List(_input, default);
+        var result = await GoogleDrive.List(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.IsNotNull(result.Data);
     }
@@ -55,7 +55,7 @@ public class UnitTests
     public async Task ListTest_FileDoesntExists_Success()
     {
         _input.FileQuery = $"name = 'no file'";
-        var result = await GoogleDrive.List(_input, default);
+        var result = await GoogleDrive.List(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.IsNotNull(result.Data);
     }
@@ -64,7 +64,7 @@ public class UnitTests
     public async Task ListTest_MissingJSON_Throw()
     {
         _input.ServiceAccountKeyJSON = null;
-        var result = await Assert.ThrowsExceptionAsync<ArgumentException>(async () => await GoogleDrive.List(_input, default));
+        var result = await Assert.ThrowsExceptionAsync<ArgumentException>(async () => await GoogleDrive.List(_input, new Options(), default));
         Assert.AreEqual("Service account key missing. (Parameter 'ServiceAccountKeyJSON')", result.Message);
     }
 
@@ -72,7 +72,7 @@ public class UnitTests
     public async Task ListTest_InvalidJSON_Throw()
     {
         _input.ServiceAccountKeyJSON = "NoJsonHere";
-        var result = await Assert.ThrowsExceptionAsync<AggregateException>(async () => await GoogleDrive.List(_input, default));
+        var result = await Assert.ThrowsExceptionAsync<AggregateException>(async () => await GoogleDrive.List(_input, new Options(), default));
         Assert.AreEqual("One or more errors occurred. (Error deserializing JSON credential data.)", result.Message);
     }
 }

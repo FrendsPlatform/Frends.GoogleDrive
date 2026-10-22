@@ -17,9 +17,16 @@ public class Result
     /// <example>{{ "1bzL3JPJDmN_sLe0hzySuGUzK2mtW1xML": { "Id": "1bzL3JPJDmN_sLe0hzySuGUzK2mtW1xML", "Name": "test-photograph.jpg", "Size": 271191, "Version": 3,b"CreatedTime": "2023-11-16T08:01:18.824+02:00" }, ...</example>
     public string Data { get; private set; }
 
-    internal Result(bool success, string data)
+    /// <summary>
+    /// Error details. Null when Success is true.
+    /// </summary>
+    /// <example>null</example>
+    public Error Error { get; private set; }
+
+    internal Result(bool success, string data, Error error = null)
     {
         Success = success;
         Data = data;
+        Error = error;
     }
 }
