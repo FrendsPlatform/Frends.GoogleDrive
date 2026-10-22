@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Frends.GoogleDrive.Upload.Definitions;
 
@@ -25,10 +25,17 @@ public class Result
     /// <example>{ {"An error occured..."}, {"An error occured..."} }</example>
     public List<dynamic> ErrorMessage { get; private set; }
 
-    internal Result(bool success, List<UploadResult> data, List<dynamic> errorMessage)
+    /// <summary>
+    /// Error details. Null when the Task did not fail with an exception.
+    /// </summary>
+    /// <example>null</example>
+    public Error Error { get; private set; }
+
+    internal Result(bool success, List<UploadResult> data, List<dynamic> errorMessage, Error error = null)
     {
         Success = success;
         Data = data;
         ErrorMessage = errorMessage;
+        Error = error;
     }
 }

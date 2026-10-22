@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Frends.GoogleDrive.Upload.Definitions;
 
@@ -18,4 +19,12 @@ public class Options
     /// </summary>
     /// <example>false</example>
     public bool ThrowErrorIfNoMatch { get; set; }
+
+    /// <summary>
+    /// Overrides the error message on failure. If `ThrowErrorOnFailure` is set to `true`, then the original exception will be wrapped in a new Exception with this error message.
+    /// </summary>
+    /// <example>Uploading files to Google Drive failed</example>
+    [DisplayFormat(DataFormatString = "Text")]
+    [DefaultValue("")]
+    public string ErrorMessageOnFailure { get; set; } = string.Empty;
 }
