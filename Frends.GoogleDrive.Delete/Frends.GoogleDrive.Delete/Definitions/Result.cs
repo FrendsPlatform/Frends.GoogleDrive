@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Frends.GoogleDrive.Delete.Definitions;
 
@@ -8,20 +8,20 @@ namespace Frends.GoogleDrive.Delete.Definitions;
 public class Result
 {
     /// <summary>
-    /// Gets a value indicating whether process was executed successfully.
+    /// Gets or sets a value indicating whether process was executed successfully.
     /// </summary>
     /// <example>true</example>
-    public bool Success { get; private set; }
+    public bool Success { get; set; }
 
     /// <summary>
     /// List of deleted items.
     /// </summary>
     /// <example>{ {"id", "filename"}, {"id", filename"} }</example>
-    public List<DeleteResult> Data { get; private set; }
+    public List<DeleteResult> Data { get; set; }
 
-    internal Result(bool success, List<DeleteResult> data)
-    {
-        Success = success;
-        Data = data;
-    }
+    /// <summary>
+    /// Error that occurred during task execution.
+    /// </summary>
+    /// <example>object { string Message, Exception AdditionalInfo }</example>
+    public Error Error { get; set; }
 }

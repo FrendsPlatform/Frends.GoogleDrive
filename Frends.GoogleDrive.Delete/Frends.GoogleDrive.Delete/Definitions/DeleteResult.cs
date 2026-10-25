@@ -1,10 +1,16 @@
-﻿namespace Frends.GoogleDrive.Delete.Definitions;
+namespace Frends.GoogleDrive.Delete.Definitions;
 
 /// <summary>
 /// Delete result.
 /// </summary>
 public class DeleteResult
 {
+    internal DeleteResult(string fileId, string filename)
+    {
+        FileId = fileId;
+        Filename = filename;
+    }
+
     /// <summary>
     /// File's Id in the Google Drive.
     /// </summary>
@@ -16,10 +22,4 @@ public class DeleteResult
     /// </summary>
     /// <example>test.txt</example>
     public string Filename { get; private set; }
-
-    internal DeleteResult(string fileId, string filename)
-    {
-        FileId = fileId;
-        Filename = filename;
-    }
 }
