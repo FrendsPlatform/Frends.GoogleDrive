@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using dotenv.net;
 using Frends.GoogleDrive.Upload.Definitions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -12,23 +13,35 @@ namespace Frends.GoogleDrive.Upload.Tests;
 [TestClass]
 public class UnitTests
 {
-    private readonly string? googleDriveCredBase64Part1 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part1");
-    private readonly string? googleDriveCredBase64Part2 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2");
+    private readonly string? googleDriveCredBase64Part1 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part1") ?? string.Empty;
+    private readonly string? googleDriveCredBase64Part2 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2") ?? string.Empty;
     private readonly string? driveFolder = Environment.GetEnvironmentVariable("GoogleDrive_FolderId");
+    private string testSourceDirectory = string.Empty;
+    private string testCredentialsDirectory = string.Empty;
     private Input input = new();
     private Options options = new();
+
+    static UnitTests()
+    {
+        DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
+    }
 
     [TestInitialize]
     public void Setup()
     {
         var credentialsJson = Encoding.ASCII.GetString(Convert.FromBase64String(googleDriveCredBase64Part1 + googleDriveCredBase64Part2));
+        testSourceDirectory = Path.Combine(Path.GetTempPath(), $"Frends.GoogleDrive.Upload.Tests.{Guid.NewGuid():N}");
+        Directory.CreateDirectory(testSourceDirectory);
+        File.WriteAllBytes(Path.Combine(testSourceDirectory, "test-pdf-document.pdf"), Array.Empty<byte>());
+        File.WriteAllBytes(Path.Combine(testSourceDirectory, "test-photograph.jpg"), Array.Empty<byte>());
 
         input = new()
         {
             ServiceAccountKeyJSON = credentialsJson,
             FileMask = default,
-            SourceDirectory = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "TestFiles"),
+            SourceDirectory = testSourceDirectory,
             TargetFolderId = driveFolder,
+            IncludeSharedDrives = true,
         };
 
         options = new()
@@ -36,6 +49,16 @@ public class UnitTests
             ThrowErrorIfNoMatch = true,
             ThrowErrorOnFailure = true,
         };
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        if (Directory.Exists(testSourceDirectory))
+            Directory.Delete(testSourceDirectory, recursive: true);
+
+        if (Directory.Exists(testCredentialsDirectory))
+            Directory.Delete(testCredentialsDirectory, recursive: true);
     }
 
     [TestMethod]
@@ -50,11 +73,15 @@ public class UnitTests
         Assert.IsTrue(result.Data.Any(x => x.UploadedFileName.Equals("test-photograph.jpg")));
     }
 
-    [Ignore("Can't test this in github")]
     [TestMethod]
     public async Task UploadTest_JSONasFile()
     {
-        input.ServiceAccountKeyJSON = "filepath";
+        testCredentialsDirectory = Path.Combine(Path.GetTempPath(), $"Frends.GoogleDrive.Upload.Credentials.{Guid.NewGuid():N}");
+        Directory.CreateDirectory(testCredentialsDirectory);
+        var credentialsPath = Path.Combine(testCredentialsDirectory, "service-account.json");
+        await File.WriteAllTextAsync(credentialsPath, input.ServiceAccountKeyJSON);
+        input.ServiceAccountKeyJSON = credentialsPath;
+
         var result = await Upload.GoogleDrive.Upload(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
@@ -144,6 +171,7 @@ public class UnitTests
     public async Task UploadTest_NoSuchFolder_Throw()
     {
         input.TargetFolderId = "123";
+        input.FileMask = "*.pdf";
         var result = await Assert.ThrowsExceptionAsync<Exception>(async () => await Upload.GoogleDrive.Upload(input, options, default));
         Assert.AreEqual("Error uploading file: test-pdf-document.pdf. Error: The service drive has thrown an exception. HttpStatusCode is NotFound. File not found: 123.", result.Message);
     }
