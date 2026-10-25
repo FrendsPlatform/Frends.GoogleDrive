@@ -1,22 +1,23 @@
-using dotenv.net;
-using Frends.GoogleDrive.Delete.Definitions;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Drive.v3;
-using Google.Apis.Services;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using dotenv.net;
+using Frends.GoogleDrive.Delete.Definitions;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Drive.v3;
+using Google.Apis.Services;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 namespace Frends.GoogleDrive.Delete.Tests;
 
 [TestClass]
 public class UnitTests
 {
-    private Input _input = new();
-    private string _folderId = string.Empty;
+    private Input input = new();
+    private string folderId = string.Empty;
 
     static UnitTests()
     {
@@ -33,13 +34,13 @@ public class UnitTests
         Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2")));
 
     // Restricts every delete/list to direct children of the per-test folder.
-    private string FolderQuery => $"'{_folderId}' in parents";
+    private string FolderQuery => $"'{folderId}' in parents";
 
     [TestInitialize]
     public async Task Setup()
     {
         await CreateTestFolderWithFiles();
-        _input = new()
+        input = new()
         {
             ServiceAccountKeyJSON = CredentialsJson,
             FileQuery = FolderQuery,
@@ -49,14 +50,14 @@ public class UnitTests
     [TestCleanup]
     public async Task CleanUp()
     {
-        if (string.IsNullOrEmpty(_folderId))
+        if (string.IsNullOrEmpty(folderId))
             return;
 
         // Deleting the folder also removes anything left inside it.
         using var service = CreateService();
         try
         {
-            await service.Files.Delete(_folderId).ExecuteAsync();
+            await service.Files.Delete(folderId).ExecuteAsync();
         }
         catch (Google.GoogleApiException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
         {
@@ -66,7 +67,7 @@ public class UnitTests
     [TestMethod]
     public async Task DeleteTest_ALL_Success()
     {
-        var result = await GoogleDrive.Delete(_input, new Options(), default);
+        var result = await GoogleDrive.Delete(input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
         Assert.IsTrue(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
@@ -81,8 +82,8 @@ public class UnitTests
         try
         {
             await File.WriteAllTextAsync(keyFile, CredentialsJson);
-            _input.ServiceAccountKeyJSON = keyFile;
-            var result = await GoogleDrive.Delete(_input, new Options(), default);
+            input.ServiceAccountKeyJSON = keyFile;
+            var result = await GoogleDrive.Delete(input, new Options(), default);
             Assert.IsTrue(result.Success);
             Assert.AreEqual(2, result.Data.Count);
             Assert.IsTrue(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
@@ -98,8 +99,8 @@ public class UnitTests
     [TestMethod]
     public async Task DeleteTest_JPG_Success()
     {
-        _input.FileQuery = $"{FolderQuery} and name = 'test-photograph.jpg'";
-        var result = await GoogleDrive.Delete(_input, new Options(), default);
+        input.FileQuery = $"{FolderQuery} and name = 'test-photograph.jpg'";
+        var result = await GoogleDrive.Delete(input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, result.Data.Count);
         Assert.IsFalse(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
@@ -110,8 +111,8 @@ public class UnitTests
     [TestMethod]
     public async Task DeleteTest_FileDoesntExists_Success()
     {
-        _input.FileQuery = $"{FolderQuery} and name = 'no file'";
-        var result = await GoogleDrive.Delete(_input, new Options(), default);
+        input.FileQuery = $"{FolderQuery} and name = 'no file'";
+        var result = await GoogleDrive.Delete(input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(0, result.Data.Count);
         Assert.IsFalse(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
@@ -122,16 +123,16 @@ public class UnitTests
     [TestMethod]
     public async Task DeleteTest_MissingJSON_Throw()
     {
-        _input.ServiceAccountKeyJSON = null;
-        var result = await Assert.ThrowsExceptionAsync<ArgumentException>(async () => await GoogleDrive.Delete(_input, new Options(), default));
+        input.ServiceAccountKeyJSON = null;
+        var result = await Assert.ThrowsExceptionAsync<ArgumentException>(async () => await GoogleDrive.Delete(input, new Options(), default));
         Assert.AreEqual("Service account key missing. (Parameter 'ServiceAccountKeyJSON')", result.Message);
     }
 
     [TestMethod]
     public async Task DeleteTest_InvalidJSON_Throw()
     {
-        _input.ServiceAccountKeyJSON = "NoJsonHere";
-        var result = await Assert.ThrowsExceptionAsync<AggregateException>(async () => await GoogleDrive.Delete(_input, new Options(), default));
+        input.ServiceAccountKeyJSON = "NoJsonHere";
+        var result = await Assert.ThrowsExceptionAsync<AggregateException>(async () => await GoogleDrive.Delete(input, new Options(), default));
         Assert.AreEqual("One or more errors occurred. (Error deserializing JSON credential data.)", result.Message);
     }
 
@@ -156,14 +157,14 @@ public class UnitTests
             Name = $"frends-delete-test-{Guid.NewGuid()}",
             MimeType = "application/vnd.google-apps.folder",
         }).ExecuteAsync();
-        _folderId = folder.Id;
+        folderId = folder.Id;
 
         foreach (var name in new[] { "test-pdf-document.pdf", "test-photograph.jpg" })
         {
             await service.Files.Create(new Google.Apis.Drive.v3.Data.File
             {
                 Name = name,
-                Parents = new[] { _folderId },
+                Parents = new[] { folderId },
             }).ExecuteAsync();
         }
     }

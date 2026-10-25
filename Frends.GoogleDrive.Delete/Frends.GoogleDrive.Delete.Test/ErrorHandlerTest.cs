@@ -1,7 +1,7 @@
-using Frends.GoogleDrive.Delete.Definitions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading.Tasks;
+using Frends.GoogleDrive.Delete.Definitions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Frends.GoogleDrive.Delete.Tests;
 
@@ -9,8 +9,6 @@ namespace Frends.GoogleDrive.Delete.Tests;
 public class ErrorHandlerTest
 {
     private const string CustomErrorMessage = "CustomErrorMessage";
-
-    private static Input InvalidInput() => new() { ServiceAccountKeyJSON = string.Empty, FileQuery = null };
 
     [TestMethod]
     public async Task Should_Throw_Error_When_ThrowErrorOnFailure_Is_True()
@@ -34,4 +32,6 @@ public class ErrorHandlerTest
             await GoogleDrive.Delete(InvalidInput(), new Options { ErrorMessageOnFailure = CustomErrorMessage }, default));
         StringAssert.Contains(ex.Message, CustomErrorMessage);
     }
+
+    private static Input InvalidInput() => new() { ServiceAccountKeyJSON = string.Empty, FileQuery = null };
 }
