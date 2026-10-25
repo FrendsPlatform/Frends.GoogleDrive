@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Frends.GoogleDrive.List.Definitions;
@@ -36,6 +36,7 @@ public class Input
     /// </example>
     [DisplayFormat(DataFormatString = "Text")]
     [PasswordPropertyText]
+    [Required]
     public string ServiceAccountKeyJSON { get; set; }
 
     /// <summary>

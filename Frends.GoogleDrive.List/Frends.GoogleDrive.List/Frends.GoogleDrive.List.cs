@@ -1,8 +1,3 @@
-﻿using Frends.GoogleDrive.List.Definitions;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Drive.v3;
-using Google.Apis.Services;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,30 +5,35 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Frends.GoogleDrive.List.Definitions;
+using Frends.GoogleDrive.List.Helpers;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Drive.v3;
+using Google.Apis.Services;
+using Newtonsoft.Json;
 
 namespace Frends.GoogleDrive.List;
 
 /// <summary>
 /// Google Drive List Task.
 /// </summary>
-public class GoogleDrive
+public static class GoogleDrive
 {
     /// <summary>
     /// List files in Google Drive.
     /// [Documentation](https://tasks.frends.com/tasks/frends-tasks/Frends.GoogleDrive.List)
     /// </summary>
-    /// <param name="input">Input parameters</param>
-    /// <param name="cancellationToken">Token received from Frends to cancel this Task.</param>
-    /// <returns>Object { bool Success, string Data }</returns>
-    public static async Task<Result> List([PropertyTab] Input input, CancellationToken cancellationToken)
+    /// <param name="input">Essential parameters.</param>
+    /// <param name="options">Additional parameters.</param>
+    /// <param name="cancellationToken">A cancellation token provided by Frends Platform.</param>
+    /// <returns>object { bool Success, string Data, object Error { string Message, Exception AdditionalInfo } }</returns>
+    public static async Task<Result> List([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(input.ServiceAccountKeyJSON))
-            throw new ArgumentException(@"Service account key missing.", nameof(input.ServiceAccountKeyJSON));
-
         DriveService service = null;
-        var json = string.Empty;
         try
         {
+            ValidationHandler.Run(input, options);
+
             service = await CreateDriveService(input, cancellationToken);
             var files = await GetFileList(service, input);
             var fileDict = new Dictionary<string, object>();
@@ -47,18 +47,21 @@ public class GoogleDrive
                 fileDict[file.Id] = new { file.Id, file.Name, file.Size, file.Version, file.CreatedTime };
             }
 
-            json = JsonConvert.SerializeObject(fileDict);
+            return new Result
+            {
+                Success = true,
+                Data = JsonConvert.SerializeObject(fileDict),
+                Error = null,
+            };
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            return ex.Handle(options);
         }
         finally
         {
             service?.Dispose();
         }
-
-        return new Result(true, json);
     }
 
     private static async Task<DriveService> CreateDriveService(Input input, CancellationToken cancellationToken)
@@ -74,7 +77,7 @@ public class GoogleDrive
         var service = new DriveService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credential,
-            ApplicationName = "Frends iPaaS"
+            ApplicationName = "Frends iPaaS",
         });
 
         return service;
