@@ -1,34 +1,35 @@
-using Frends.GoogleDrive.Download.Definitions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Frends.GoogleDrive.Download.Definitions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 namespace Frends.GoogleDrive.Download.Tests;
 
 [TestClass]
 public class UnitTests
 {
-    private readonly string? _googleDrive_CredBase64_Part1 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part1");
-    private readonly string? _googleDrive_CredBase64_Part2 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2");
-    private readonly string _destinationFolder = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "TestFiles");
-    private Input _input = new();
-    private Options _options = new();
+    private readonly string? googleDriveCredBase64Part1 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part1");
+    private readonly string? googleDriveCredBase64Part2 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2");
+    private readonly string destinationFolder = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "TestFiles");
+    private Input input = new();
+    private Options options = new();
 
     [TestInitialize]
     public void Setup()
     {
-        var credentialsJson = Encoding.ASCII.GetString(Convert.FromBase64String(_googleDrive_CredBase64_Part1 + _googleDrive_CredBase64_Part2));
+        var credentialsJson = Encoding.ASCII.GetString(Convert.FromBase64String(googleDriveCredBase64Part1 + googleDriveCredBase64Part2));
 
-        _input = new()
+        input = new()
         {
             ServiceAccountKeyJSON = credentialsJson,
-            DestinationDirectory = _destinationFolder,
-            FileQuery = null
+            DestinationDirectory = destinationFolder,
+            FileQuery = null,
         };
 
-        _options = new()
+        options = new()
         {
             ThrowErrorOnFailure = true,
             CreateDestinationFolder = true,
@@ -41,16 +42,16 @@ public class UnitTests
     {
         var input = new Input
         {
-            ServiceAccountKeyJSON = "",
-            FileQuery = "",
-            DestinationDirectory = _destinationFolder,
-            IncludeSharedDrives = true
+            ServiceAccountKeyJSON = string.Empty,
+            FileQuery = string.Empty,
+            DestinationDirectory = destinationFolder,
+            IncludeSharedDrives = true,
         };
 
         var options = new Options
         {
             CreateDestinationFolder = true,
-            ThrowErrorOnFailure = true
+            ThrowErrorOnFailure = true,
         };
 
         var result = await GoogleDrive.Download(input, options, default);
@@ -61,14 +62,14 @@ public class UnitTests
     [TestCleanup]
     public void CleanUp()
     {
-        if (Directory.Exists(_destinationFolder))
-            Directory.Delete(_destinationFolder, true);
+        if (Directory.Exists(destinationFolder))
+            Directory.Delete(destinationFolder, true);
     }
 
     [TestMethod]
     public async Task DownloadTest_ALL_Success()
     {
-        var result = await GoogleDrive.Download(_input, _options, default);
+        var result = await GoogleDrive.Download(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.IsTrue(result.Data.Count > 0);
         Assert.AreEqual(0, result.ErrorMessage.Count);
@@ -80,8 +81,8 @@ public class UnitTests
     [TestMethod]
     public async Task DownloadTest_JSONasFile()
     {
-        _input.ServiceAccountKeyJSON = "filepath";
-        var result = await GoogleDrive.Download(_input, _options, default);
+        input.ServiceAccountKeyJSON = "filepath";
+        var result = await GoogleDrive.Download(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
         Assert.AreEqual(0, result.ErrorMessage.Count);
@@ -92,8 +93,8 @@ public class UnitTests
     [TestMethod]
     public async Task DownloadTest_JPG_Success()
     {
-        _input.FileQuery = $"name = 'test-photograph.jpg'";
-        var result = await GoogleDrive.Download(_input, _options, default);
+        input.FileQuery = $"name = 'test-photograph.jpg'";
+        var result = await GoogleDrive.Download(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.IsTrue(result.Data.Count > 0);
         Assert.AreEqual(0, result.ErrorMessage.Count);
@@ -103,8 +104,8 @@ public class UnitTests
     [TestMethod]
     public async Task DownloadTest_FileDoesntExists_Success()
     {
-        _input.FileQuery = $"name = 'no file'";
-        var result = await GoogleDrive.Download(_input, _options, default);
+        input.FileQuery = $"name = 'no file'";
+        var result = await GoogleDrive.Download(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(0, result.Data.Count);
         Assert.AreEqual(0, result.ErrorMessage.Count);
@@ -113,25 +114,25 @@ public class UnitTests
     [TestMethod]
     public async Task DownloadTest_InvalidDestination_Throw()
     {
-        _input.DestinationDirectory = "no folder";
-        _options.CreateDestinationFolder = false;
-        var result = await Assert.ThrowsExceptionAsync<ArgumentException>(async () => await GoogleDrive.Download(_input, _options, default));
+        input.DestinationDirectory = "no folder";
+        options.CreateDestinationFolder = false;
+        var result = await Assert.ThrowsExceptionAsync<ArgumentException>(async () => await GoogleDrive.Download(input, options, default));
         Assert.AreEqual("Destination directory doesn't exist. (Parameter 'DestinationDirectory Value:no folder')", result.Message);
     }
 
     [TestMethod]
     public async Task DownloadTest_MissingJSON_Throw()
     {
-        _input.ServiceAccountKeyJSON = null;
-        var result = await Assert.ThrowsExceptionAsync<ArgumentException>(async () => await GoogleDrive.Download(_input, _options, default));
+        input.ServiceAccountKeyJSON = null;
+        var result = await Assert.ThrowsExceptionAsync<ArgumentException>(async () => await GoogleDrive.Download(input, options, default));
         Assert.AreEqual("Service account key missing. (Parameter 'serviceAccountKeyJSON')", result.Message);
     }
 
     [TestMethod]
     public async Task DownloadTest_InvalidJSON_Throw()
     {
-        _input.ServiceAccountKeyJSON = "NoJsonHere";
-        var result = await Assert.ThrowsExceptionAsync<AggregateException>(async () => await GoogleDrive.Download(_input, _options, default));
+        input.ServiceAccountKeyJSON = "NoJsonHere";
+        var result = await Assert.ThrowsExceptionAsync<AggregateException>(async () => await GoogleDrive.Download(input, options, default));
         Assert.AreEqual("One or more errors occurred. (Error deserializing JSON credential data.)", result.Message);
     }
 }

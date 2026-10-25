@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Frends.GoogleDrive.Download.Definitions;
 
@@ -11,24 +11,23 @@ public class Result
     /// Gets a value indicating whether download was executed successfully.
     /// </summary>
     /// <example>true</example>
-    public bool Success { get; private set; }
+    public bool Success { get; set; }
 
     /// <summary>
     /// List of download result(s).
     /// </summary>
-    /// <example>{ {"id", "filename"}, {"id", filename"} }</example>
-    public List<DownloadResult> Data { get; private set; }
+    /// <example>{ { "1rGpAzFfw2zDSk8lRGYDafwkxxtw_N7fY", "test.txt" } }</example>
+    public List<DownloadResult> Data { get; set; }
 
     /// <summary>
     /// List of error messages.
     /// </summary>
-    /// <example>{ "An error occured...", "Another error occured" }</example>
-    public List<dynamic> ErrorMessage { get; private set; }
+    /// <example>{ "Error downloading file: test.txt. Error: Not found" }</example>
+    public List<dynamic> ErrorMessage { get; set; }
 
-    internal Result(bool success, List<DownloadResult> data, List<dynamic> errorMessage)
-    {
-        Success = success;
-        Data = data;
-        ErrorMessage = errorMessage;
-    }
+    /// <summary>
+    /// Error that occurred during task execution.
+    /// </summary>
+    /// <example>object { string Message, Exception AdditionalInfo }</example>
+    public Error Error { get; set; }
 }

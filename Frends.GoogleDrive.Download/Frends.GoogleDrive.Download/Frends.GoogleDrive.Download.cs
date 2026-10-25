@@ -1,7 +1,3 @@
-﻿using Frends.GoogleDrive.Download.Definitions;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Drive.v3;
-using Google.Apis.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,13 +5,18 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Frends.GoogleDrive.Download.Definitions;
+using Frends.GoogleDrive.Download.Helpers;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Drive.v3;
+using Google.Apis.Services;
 
 namespace Frends.GoogleDrive.Download;
 
 /// <summary>
 /// Google Drive Download Task.
 /// </summary>
-public class GoogleDrive
+public static class GoogleDrive
 {
     /// <summary>
     /// Download objects from Google Drive.
@@ -24,7 +25,7 @@ public class GoogleDrive
     /// <param name="input">Input parameters</param>
     /// <param name="options">Options parameters.</param>
     /// <param name="cancellationToken">Token received from Frends to cancel this Task.</param>
-    /// <returns>Object { bool Success, List&lt;DownloadResult&gt; Data, List&lt;dynamic&gt; ErrorMessage }</returns>
+    /// <returns>Object { bool Success, List&lt;DownloadResult&gt; Data, List&lt;dynamic&gt; ErrorMessage, object Error { string Message, Exception AdditionalInfo } }</returns>
     public static async Task<Result> Download([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
     {
         var resultList = new List<DownloadResult>();
@@ -49,8 +50,7 @@ public class GoogleDrive
                     FileStream fileStream = new(
                         Path.Combine(input.DestinationDirectory, file.Name),
                         FileMode.OpenOrCreate,
-                        FileAccess.Write
-                    );
+                        FileAccess.Write);
 
                     // Add a handler which will be notified on progress changes.
                     // It will notify on each chunk download and when the download is completed or failed.
@@ -63,6 +63,7 @@ public class GoogleDrive
                                     Console.WriteLine(progress.BytesDownloaded);
                                     break;
                                 }
+
                             case Google.Apis.Download.DownloadStatus.Completed:
                                 {
                                     Console.WriteLine("Download complete.");
@@ -70,6 +71,7 @@ public class GoogleDrive
                                     fileStream.Close();
                                     break;
                                 }
+
                             case Google.Apis.Download.DownloadStatus.Failed:
                                 {
                                     Console.WriteLine("Download failed.");
@@ -92,28 +94,34 @@ public class GoogleDrive
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            return ex.Handle(options);
         }
         finally
         {
             service?.Dispose();
         }
 
-        return new Result(errorList.Count == 0, resultList, errorList);
+        return new Result
+        {
+            Success = errorList.Count == 0,
+            Data = resultList,
+            ErrorMessage = errorList,
+            Error = null,
+        };
     }
 
-    private static void InputCheck(string serviceAccountKeyJSON, string DestinationDirectory, bool createDir)
+    private static void InputCheck(string serviceAccountKeyJSON, string destinationDirectory, bool createDir)
     {
         if (string.IsNullOrWhiteSpace(serviceAccountKeyJSON))
             throw new ArgumentException(@"Service account key missing.", nameof(serviceAccountKeyJSON));
-        if (!Directory.Exists(DestinationDirectory))
+        if (!Directory.Exists(destinationDirectory))
         {
             if (createDir)
-                Directory.CreateDirectory(DestinationDirectory);
+                Directory.CreateDirectory(destinationDirectory);
             else
-                throw new ArgumentException(@"Destination directory doesn't exist.", $"{nameof(DestinationDirectory)} Value:{DestinationDirectory}");
+                throw new ArgumentException(@"Destination directory doesn't exist.", $"{nameof(destinationDirectory)} Value:{destinationDirectory}");
         }
     }
 
@@ -130,7 +138,7 @@ public class GoogleDrive
         var service = new DriveService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credential,
-            ApplicationName = "Frends iPaaS"
+            ApplicationName = "Frends iPaaS",
         });
 
         return service;
