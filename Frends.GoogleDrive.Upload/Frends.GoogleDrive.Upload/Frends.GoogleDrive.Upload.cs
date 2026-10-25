@@ -1,7 +1,3 @@
-﻿using Frends.GoogleDrive.Upload.Definitions;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Drive.v3;
-using Google.Apis.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,13 +5,18 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Frends.GoogleDrive.Upload.Definitions;
+using Frends.GoogleDrive.Upload.Helpers;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Drive.v3;
+using Google.Apis.Services;
 
 namespace Frends.GoogleDrive.Upload;
 
 /// <summary>
 /// Google Drive Upload Task.
 /// </summary>
-public class GoogleDrive
+public static class GoogleDrive
 {
     /// <summary>
     /// Upload objects to Google Drive.
@@ -24,7 +25,7 @@ public class GoogleDrive
     /// <param name="input">Input parameters</param>
     /// <param name="options">Options parameters.</param>
     /// <param name="cancellationToken">Token received from Frends to cancel this Task.</param>
-    /// <returns>Object { bool success, List&lt;UploadResult&gt; data, List&lt;dynamic&gt; errorMessages }</returns>
+    /// <returns>Object { bool success, List&lt;UploadResult&gt; data, List&lt;dynamic&gt; errorMessage, object { string Message, Exception AdditionalInfo } Error }</returns>
     public static async Task<Result> Upload([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
     {
         var resultList = new List<UploadResult>();
@@ -43,7 +44,7 @@ public class GoogleDrive
                 var fileMetadata = new Google.Apis.Drive.v3.Data.File
                 {
                     Name = file.Name,
-                    Parents = string.IsNullOrWhiteSpace(input.TargetFolderId) ? null : new string[] { input.TargetFolderId }
+                    Parents = string.IsNullOrWhiteSpace(input.TargetFolderId) ? null : new string[] { input.TargetFolderId },
                 };
 
                 FilesResource.CreateMediaUpload request;
@@ -68,16 +69,16 @@ public class GoogleDrive
                     resultList.Add(new UploadResult(request.ResponseBody?.Id, file.Name));
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            return ex.Handle(options);
         }
         finally
         {
             service?.Dispose();
         }
 
-        return new Result(errorList.Count == 0, resultList, errorList);
+        return new Result { Success = errorList.Count == 0, Data = resultList, ErrorMessage = errorList };
     }
 
     private static void InputCheck(string serviceAccountKeyJSON, string sourceDirectory)
@@ -101,7 +102,7 @@ public class GoogleDrive
         var service = new DriveService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credential,
-            ApplicationName = "Frends iPaaS"
+            ApplicationName = "Frends iPaaS",
         });
 
         return service;
@@ -110,6 +111,7 @@ public class GoogleDrive
     private static FileInfo[] GetFileInfo(Input input, Options options)
     {
         var localRoot = new DirectoryInfo(input.SourceDirectory);
+
         // If filemask is not set, get all files.
         var filesToCopy = localRoot.GetFiles(input.FileMask ?? "*", SearchOption.TopDirectoryOnly);
         if (options.ThrowErrorIfNoMatch && filesToCopy.Length < 1)

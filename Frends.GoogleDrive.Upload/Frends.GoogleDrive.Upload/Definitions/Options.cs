@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Frends.GoogleDrive.Upload.Definitions;
 
@@ -11,11 +12,19 @@ public class Options
     /// Value indicating whether upload error should stop the Task and throw an exception (true) or try to add the error message to Result.ErrorMessages and continue to upload next file.</summary>
     /// <example>true</example>
     [DefaultValue(true)]
-    public bool ThrowErrorOnFailure { get; set; }
+    public bool ThrowErrorOnFailure { get; set; } = true;
 
     /// <summary>
     /// Throw error if there are no file(s) in the path matching the filemask.
     /// </summary>
     /// <example>false</example>
     public bool ThrowErrorIfNoMatch { get; set; }
+
+    /// <summary>
+    /// Overrides the error message on failure.
+    /// </summary>
+    /// <example>Custom error message</example>
+    [DisplayFormat(DataFormatString = "Text")]
+    [DefaultValue("")]
+    public string ErrorMessageOnFailure { get; set; } = string.Empty;
 }

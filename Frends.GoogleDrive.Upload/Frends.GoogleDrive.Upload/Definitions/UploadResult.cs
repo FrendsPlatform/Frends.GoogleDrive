@@ -1,10 +1,16 @@
-﻿namespace Frends.GoogleDrive.Upload.Definitions;
+namespace Frends.GoogleDrive.Upload.Definitions;
 
 /// <summary>
 /// Upload result.
 /// </summary>
 public class UploadResult
 {
+    internal UploadResult(string uploadedFileId, string uploadedFileName)
+    {
+        UploadedFileId = uploadedFileId;
+        UploadedFileName = uploadedFileName;
+    }
+
     /// <summary>
     /// Uploaded file's Id in the Google Drive.
     /// </summary>
@@ -16,10 +22,4 @@ public class UploadResult
     /// </summary>
     /// <example>test.txt</example>
     public string UploadedFileName { get; private set; }
-
-    internal UploadResult(string uploadedFileId, string uploadedFileName)
-    {
-        UploadedFileId = uploadedFileId;
-        UploadedFileName = uploadedFileName;
-    }
 }
