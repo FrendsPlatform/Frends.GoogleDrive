@@ -15,9 +15,8 @@ namespace Frends.GoogleDrive.Delete.Tests;
 [TestClass]
 public class UnitTests
 {
-    private readonly string _testFileDir = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "TestFiles");
     private Input _input = new();
-    private List<string> _uploadedIDs = new();
+    private string _folderId = string.Empty;
 
     static UnitTests()
     {
@@ -33,25 +32,35 @@ public class UnitTests
         Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part1") +
         Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2")));
 
-    private static string? DriveFolder => Environment.GetEnvironmentVariable("GoogleDrive_FolderId");
+    // Restricts every delete/list to direct children of the per-test folder.
+    private string FolderQuery => $"'{_folderId}' in parents";
 
     [TestInitialize]
     public async Task Setup()
     {
-        await UploadTestFiles();
+        await CreateTestFolderWithFiles();
         _input = new()
         {
             ServiceAccountKeyJSON = CredentialsJson,
-            FileQuery = null
+            FileQuery = FolderQuery,
         };
     }
 
     [TestCleanup]
     public async Task CleanUp()
     {
-        _input.ServiceAccountKeyJSON = CredentialsJson;
-        _input.FileQuery = null;
-        await GoogleDrive.Delete(_input, new Options(), default);
+        if (string.IsNullOrEmpty(_folderId))
+            return;
+
+        // Deleting the folder also removes anything left inside it.
+        using var service = CreateService();
+        try
+        {
+            await service.Files.Delete(_folderId).ExecuteAsync();
+        }
+        catch (Google.GoogleApiException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+        }
     }
 
     [TestMethod]
@@ -65,23 +74,31 @@ public class UnitTests
         Assert.AreEqual(0, GetFileList().Count);
     }
 
-    [Ignore("Can't test this in github")]
     [TestMethod]
     public async Task DeleteTest_JSONasFile()
     {
-        _input.ServiceAccountKeyJSON = "filepath";
-        var result = await GoogleDrive.Delete(_input, new Options(), default);
-        Assert.IsTrue(result.Success);
-        Assert.AreEqual(2, result.Data.Count);
-        Assert.IsTrue(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
-        Assert.IsTrue(result.Data.Any(x => x.Filename.Contains("test-photograph.jpg")));
-        Assert.AreEqual(0, GetFileList().Count);
+        var keyFile = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(keyFile, CredentialsJson);
+            _input.ServiceAccountKeyJSON = keyFile;
+            var result = await GoogleDrive.Delete(_input, new Options(), default);
+            Assert.IsTrue(result.Success);
+            Assert.AreEqual(2, result.Data.Count);
+            Assert.IsTrue(result.Data.Any(x => x.Filename.Contains("test-pdf-document.pdf")));
+            Assert.IsTrue(result.Data.Any(x => x.Filename.Contains("test-photograph.jpg")));
+            Assert.AreEqual(0, GetFileList().Count);
+        }
+        finally
+        {
+            File.Delete(keyFile);
+        }
     }
 
     [TestMethod]
     public async Task DeleteTest_JPG_Success()
     {
-        _input.FileQuery = $"name = 'test-photograph.jpg'";
+        _input.FileQuery = $"{FolderQuery} and name = 'test-photograph.jpg'";
         var result = await GoogleDrive.Delete(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, result.Data.Count);
@@ -93,7 +110,7 @@ public class UnitTests
     [TestMethod]
     public async Task DeleteTest_FileDoesntExists_Success()
     {
-        _input.FileQuery = $"name = 'no file'";
+        _input.FileQuery = $"{FolderQuery} and name = 'no file'";
         var result = await GoogleDrive.Delete(_input, new Options(), default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(0, result.Data.Count);
@@ -118,47 +135,44 @@ public class UnitTests
         Assert.AreEqual("One or more errors occurred. (Error deserializing JSON credential data.)", result.Message);
     }
 
-    private async Task UploadTestFiles()
+    private static DriveService CreateService()
     {
         using var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(CredentialsJson));
         var credential = GoogleCredential.FromStreamAsync(memoryStream, default).Result.CreateScoped(DriveService.ScopeConstants.Drive);
-        var service = new DriveService(new BaseClientService.Initializer
+        return new DriveService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credential,
-            ApplicationName = "Frends iPaaS"
+            ApplicationName = "Frends iPaaS",
         });
+    }
 
-        var filesToCopy = Directory.GetFiles(_testFileDir);
+    // Folders and zero-byte files use no Drive storage quota, so a service account can own them.
+    private async Task CreateTestFolderWithFiles()
+    {
+        using var service = CreateService();
 
-        foreach (var file in filesToCopy)
+        var folder = await service.Files.Create(new Google.Apis.Drive.v3.Data.File
         {
-            var fileMetadata = new Google.Apis.Drive.v3.Data.File
-            {
-                Name = new FileInfo(file).Name,
-                Parents = string.IsNullOrWhiteSpace(DriveFolder) ? null : new string[] { DriveFolder }
-            };
+            Name = $"frends-delete-test-{Guid.NewGuid()}",
+            MimeType = "application/vnd.google-apps.folder",
+        }).ExecuteAsync();
+        _folderId = folder.Id;
 
-            FilesResource.CreateMediaUpload request;
-            await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read);
-            request = service.Files.Create(fileMetadata, stream, null);
-            request.Fields = "id";
-            request.SupportsAllDrives = true;
-            var result = await request.UploadAsync();
-            _uploadedIDs.Add(request.ResponseBody.Id);
+        foreach (var name in new[] { "test-pdf-document.pdf", "test-photograph.jpg" })
+        {
+            await service.Files.Create(new Google.Apis.Drive.v3.Data.File
+            {
+                Name = name,
+                Parents = new[] { _folderId },
+            }).ExecuteAsync();
         }
     }
 
     private IList<Google.Apis.Drive.v3.Data.File> GetFileList()
     {
-        using var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(CredentialsJson));
-        var credential = GoogleCredential.FromStreamAsync(memoryStream, default).Result.CreateScoped(DriveService.ScopeConstants.Drive);
-        var service = new DriveService(new BaseClientService.Initializer
-        {
-            HttpClientInitializer = credential,
-            ApplicationName = "Frends iPaaS"
-        });
-
+        using var service = CreateService();
         FilesResource.ListRequest fileListRequest = service.Files.List();
+        fileListRequest.Q = FolderQuery;
         return fileListRequest.Execute().Files;
     }
 }
