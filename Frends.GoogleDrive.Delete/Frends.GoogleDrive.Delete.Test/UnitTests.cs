@@ -1,3 +1,4 @@
+using dotenv.net;
 using Frends.GoogleDrive.Delete.Definitions;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
@@ -14,21 +15,33 @@ namespace Frends.GoogleDrive.Delete.Tests;
 [TestClass]
 public class UnitTests
 {
-    private readonly string? _googleDrive_CredBase64_Part1 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part1");
-    private readonly string? _googleDrive_CredBase64_Part2 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2");
     private readonly string _testFileDir = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "TestFiles");
-    private readonly string? _driveFolder = Environment.GetEnvironmentVariable("GoogleDrive_FolderId");
     private Input _input = new();
     private List<string> _uploadedIDs = new();
+
+    static UnitTests()
+    {
+        // Existing environment variables (e.g. from CI) take precedence over values in .env.
+        DotEnv.Fluent()
+            .WithProbeForEnv(probeLevelsToSearch: 6)
+            .WithTrimValues()
+            .WithoutOverwriteExistingVars()
+            .Load();
+    }
+
+    private static string CredentialsJson => Encoding.ASCII.GetString(Convert.FromBase64String(
+        Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part1") +
+        Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2")));
+
+    private static string? DriveFolder => Environment.GetEnvironmentVariable("GoogleDrive_FolderId");
 
     [TestInitialize]
     public async Task Setup()
     {
-        var credentialsJson = Encoding.ASCII.GetString(Convert.FromBase64String(_googleDrive_CredBase64_Part1 + _googleDrive_CredBase64_Part2));
         await UploadTestFiles();
         _input = new()
         {
-            ServiceAccountKeyJSON = credentialsJson,
+            ServiceAccountKeyJSON = CredentialsJson,
             FileQuery = null
         };
     }
@@ -36,7 +49,7 @@ public class UnitTests
     [TestCleanup]
     public async Task CleanUp()
     {
-        _input.ServiceAccountKeyJSON = Encoding.ASCII.GetString(Convert.FromBase64String(_googleDrive_CredBase64_Part1 + _googleDrive_CredBase64_Part2));
+        _input.ServiceAccountKeyJSON = CredentialsJson;
         _input.FileQuery = null;
         await GoogleDrive.Delete(_input, new Options(), default);
     }
@@ -107,9 +120,7 @@ public class UnitTests
 
     private async Task UploadTestFiles()
     {
-        var credentialsJson = Encoding.ASCII.GetString(Convert.FromBase64String(_googleDrive_CredBase64_Part1 + _googleDrive_CredBase64_Part2));
-
-        using var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(credentialsJson));
+        using var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(CredentialsJson));
         var credential = GoogleCredential.FromStreamAsync(memoryStream, default).Result.CreateScoped(DriveService.ScopeConstants.Drive);
         var service = new DriveService(new BaseClientService.Initializer
         {
@@ -124,7 +135,7 @@ public class UnitTests
             var fileMetadata = new Google.Apis.Drive.v3.Data.File
             {
                 Name = new FileInfo(file).Name,
-                Parents = string.IsNullOrWhiteSpace(_driveFolder) ? null : new string[] { _driveFolder }
+                Parents = string.IsNullOrWhiteSpace(DriveFolder) ? null : new string[] { DriveFolder }
             };
 
             FilesResource.CreateMediaUpload request;
@@ -139,9 +150,7 @@ public class UnitTests
 
     private IList<Google.Apis.Drive.v3.Data.File> GetFileList()
     {
-        var credentialsJson = Encoding.ASCII.GetString(Convert.FromBase64String(_googleDrive_CredBase64_Part1 + _googleDrive_CredBase64_Part2));
-
-        using var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(credentialsJson));
+        using var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(CredentialsJson));
         var credential = GoogleCredential.FromStreamAsync(memoryStream, default).Result.CreateScoped(DriveService.ScopeConstants.Drive);
         var service = new DriveService(new BaseClientService.Initializer
         {
