@@ -16,13 +16,18 @@ namespace Frends.GoogleDrive.Download.Tests;
 [TestClass]
 public class UnitTests
 {
-    private static readonly string[] RequiredFixtureNames = { "test-pdf-document.pdf", "test-photograph.jpg" };
+    // Service accounts have no storage quota, but empty folders and 0-byte files don't use any.
+    private static readonly (string Name, string MimeType)[] Fixtures =
+    {
+        ("test-pdf-document.pdf", "application/pdf"),
+        ("test-photograph.jpg", "image/jpeg"),
+    };
+
     private readonly string temporaryDirectory = Path.Combine(Path.GetTempPath(), "Frends.GoogleDrive.Download.Tests", Guid.NewGuid().ToString("N"));
     private DriveService? driveService;
-    private string credentialsJson = string.Empty;
     private string testDriveFolderId = string.Empty;
-    private string destinationFolder = string.Empty;
     private string credentialsFilePath = string.Empty;
+    private string destinationFolder = string.Empty;
     private Input input = new();
     private Options options = new();
 
@@ -35,23 +40,22 @@ public class UnitTests
 
             var credentialsBase64Part1 = GetRequiredEnvironmentVariable("GoogleDrive_CredBase64_Part1");
             var credentialsBase64Part2 = Environment.GetEnvironmentVariable("GoogleDrive_CredBase64_Part2") ?? string.Empty;
-            testDriveFolderId = GetRequiredEnvironmentVariable("GoogleDrive_FolderId");
-            credentialsJson = Encoding.ASCII.GetString(Convert.FromBase64String(credentialsBase64Part1 + credentialsBase64Part2));
+            var parentFolderId = GetRequiredEnvironmentVariable("GoogleDrive_FolderId");
+            var credentialsJson = Encoding.ASCII.GetString(Convert.FromBase64String(credentialsBase64Part1 + credentialsBase64Part2));
+
             destinationFolder = Path.Combine(temporaryDirectory, "Downloads");
             credentialsFilePath = Path.Combine(temporaryDirectory, "service-account.json");
-
             Directory.CreateDirectory(temporaryDirectory);
             File.WriteAllText(credentialsFilePath, credentialsJson);
 
             driveService = await CreateDriveService(credentialsJson);
-            await ValidateTestDriveFixtures();
+            await CreateTestDriveFixtures(parentFolderId);
 
             input = new()
             {
                 ServiceAccountKeyJSON = credentialsJson,
                 DestinationDirectory = destinationFolder,
                 FileQuery = $"'{testDriveFolderId}' in parents",
-                IncludeSharedDrives = true,
             };
 
             options = new()
@@ -64,7 +68,7 @@ public class UnitTests
         {
             try
             {
-                CleanUpResources();
+                await CleanUpResources();
             }
             catch (Exception cleanupException)
             {
@@ -76,18 +80,16 @@ public class UnitTests
     }
 
     [TestCleanup]
-    public void CleanUp()
+    public async Task CleanUp()
     {
-        CleanUpResources();
+        await CleanUpResources();
     }
 
     [TestMethod]
     public async Task DownloadFromSharedDriveTest()
     {
         input.IncludeSharedDrives = true;
-
         var result = await GoogleDrive.Download(input, options, default);
-
         Assert.IsTrue(result.Success);
         Assert.IsTrue(result.Data.Any(x => x.DownloadedFilename.Equals("test-pdf-document.pdf")));
     }
@@ -101,6 +103,8 @@ public class UnitTests
         Assert.AreEqual(0, result.ErrorMessage.Count);
         Assert.IsTrue(result.Data.Any(x => x.DownloadedFilename.Equals("test-pdf-document.pdf")));
         Assert.IsTrue(result.Data.Any(x => x.DownloadedFilename.Equals("test-photograph.jpg")));
+        Assert.IsTrue(File.Exists(Path.Combine(destinationFolder, "test-pdf-document.pdf")));
+        Assert.IsTrue(File.Exists(Path.Combine(destinationFolder, "test-photograph.jpg")));
     }
 
     [TestMethod]
@@ -111,8 +115,6 @@ public class UnitTests
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
         Assert.AreEqual(0, result.ErrorMessage.Count);
-        Assert.IsTrue(result.Data.Any(x => x.DownloadedFilename.Equals("test-pdf-document.pdf")));
-        Assert.IsTrue(result.Data.Any(x => x.DownloadedFilename.Equals("test-photograph.jpg")));
     }
 
     [TestMethod]
@@ -182,38 +184,51 @@ public class UnitTests
         });
     }
 
-    private async Task ValidateTestDriveFixtures()
+    private async Task CreateTestDriveFixtures(string parentFolderId)
     {
-        var request = driveService!.Files.List();
-        request.Q = $"'{testDriveFolderId}' in parents and trashed = false";
-        request.Fields = "files(id,name,mimeType)";
-        request.SupportsAllDrives = true;
-        request.IncludeItemsFromAllDrives = true;
-        var files = (await request.ExecuteAsync()).Files ?? new List<Google.Apis.Drive.v3.Data.File>();
+        testDriveFolderId = await CreateDriveItem($"Frends Download Tests {Guid.NewGuid():N}", "application/vnd.google-apps.folder", parentFolderId);
 
-        var fileNames = files.Where(x => x.MimeType != "application/vnd.google-apps.folder").Select(x => x.Name).OrderBy(x => x).ToList();
-        if (!fileNames.SequenceEqual(RequiredFixtureNames.OrderBy(x => x)))
-        {
-            throw new InvalidOperationException(
-                $"Folder '{testDriveFolderId}' must contain exactly these files: {string.Join(", ", RequiredFixtureNames)}. Found: {(fileNames.Count == 0 ? "none (is the folder shared with the service account?)" : string.Join(", ", fileNames))}.");
-        }
+        foreach (var (name, mimeType) in Fixtures)
+            await CreateDriveItem(name, mimeType, testDriveFolderId);
     }
 
-    private void CleanUpResources()
+    // Metadata-only create: no content is uploaded, so the file is 0 bytes.
+    private async Task<string> CreateDriveItem(string name, string mimeType, string parentId)
+    {
+        var request = driveService!.Files.Create(new Google.Apis.Drive.v3.Data.File
+        {
+            Name = name,
+            MimeType = mimeType,
+            Parents = new List<string> { parentId },
+        });
+        request.Fields = "id";
+        request.SupportsAllDrives = true;
+        var item = await request.ExecuteAsync();
+        return item.Id;
+    }
+
+    private async Task CleanUpResources()
     {
         var cleanupErrors = new List<Exception>();
 
         if (driveService != null)
         {
-            try
+            // Deleting the folder also deletes the files inside it.
+            if (!string.IsNullOrWhiteSpace(testDriveFolderId))
             {
-                driveService.Dispose();
-            }
-            catch (Exception exception)
-            {
-                cleanupErrors.Add(exception);
+                try
+                {
+                    var deleteRequest = driveService.Files.Delete(testDriveFolderId);
+                    deleteRequest.SupportsAllDrives = true;
+                    await deleteRequest.ExecuteAsync();
+                }
+                catch (Exception exception)
+                {
+                    cleanupErrors.Add(exception);
+                }
             }
 
+            driveService.Dispose();
             driveService = null;
         }
 
