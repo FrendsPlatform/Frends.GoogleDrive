@@ -25,7 +25,7 @@ public static class GoogleDrive
     /// <param name="input">Input parameters</param>
     /// <param name="options">Options parameters.</param>
     /// <param name="cancellationToken">Token received from Frends to cancel this Task.</param>
-    /// <returns>Object { bool success, List&lt;UploadResult&gt; data, List&lt;dynamic&gt; errorMessage, object { string Message, Exception AdditionalInfo } Error }</returns>
+    /// <returns>Object { bool Success, List&lt;UploadResult&gt; Data, List&lt;dynamic&gt; ErrorMessage, object { string Message, Exception AdditionalInfo } Error }</returns>
     public static async Task<Result> Upload([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
     {
         var resultList = new List<UploadResult>();
