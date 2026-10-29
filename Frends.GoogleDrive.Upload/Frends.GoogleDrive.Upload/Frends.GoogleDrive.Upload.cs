@@ -25,11 +25,11 @@ public static class GoogleDrive
     /// <param name="input">Input parameters</param>
     /// <param name="options">Options parameters.</param>
     /// <param name="cancellationToken">Token received from Frends to cancel this Task.</param>
-    /// <returns>Object { bool Success, List&lt;UploadResult&gt; Data, List&lt;dynamic&gt; ErrorMessage, object { string Message, Exception AdditionalInfo } Error }</returns>
+    /// <returns>Object { bool Success, List&lt;UploadResult&gt; Data, object { string Message, string[] FailedFiles, Exception AdditionalInfo } Error }</returns>
     public static async Task<Result> Upload([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
     {
         var resultList = new List<UploadResult>();
-        var errorList = new List<dynamic>();
+        var errorList = new List<string>();
         DriveService service = null;
 
         try
@@ -59,7 +59,7 @@ public static class GoogleDrive
                     if (results.Status == Google.Apis.Upload.UploadStatus.Failed)
                     {
                         success = false;
-                        if (options.ThrowErrorOnFailure)
+                        if (!options.ContinueOnFailure)
                             throw new Exception($"Error uploading file: {file.Name}. Error: {results.Exception.Message}");
                         errorList.Add($"Error uploading file: {file.Name}. Error: {results.Exception.Message}");
                     }
@@ -78,7 +78,17 @@ public static class GoogleDrive
             service?.Dispose();
         }
 
-        return new Result { Success = errorList.Count == 0, Data = resultList, ErrorMessage = errorList };
+        return new Result
+        {
+            Success = options.ContinueOnFailure || errorList.Count == 0,
+            Data = resultList,
+            Error = errorList.Count == 0 ? null : new Error
+            {
+                Message = "One or more files failed to upload.",
+                FailedFiles = [.. errorList],
+                AdditionalInfo = null,
+            },
+        };
     }
 
     private static void InputCheck(string serviceAccountKeyJSON, string sourceDirectory)

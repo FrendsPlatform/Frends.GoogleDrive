@@ -20,14 +20,8 @@ public class Result
     public List<UploadResult> Data { get; set; }
 
     /// <summary>
-    /// Gets error message.
-    /// </summary>
-    /// <example>{ {"An error occured..."}, {"An error occured..."} }</example>
-    public List<dynamic> ErrorMessage { get; set; }
-
-    /// <summary>
     /// Error that occurred during task execution.
     /// </summary>
-    /// <example>object { string Message, Exception AdditionalInfo }</example>
+    /// <example>object { string Message, string[] FailedFiles, Exception AdditionalInfo }</example>
     public Error Error { get; set; }
 }

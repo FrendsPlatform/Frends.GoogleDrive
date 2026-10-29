@@ -10,8 +10,14 @@ public class Error
     /// <summary>
     /// Summary of the error.
     /// </summary>
-    /// <example>Unable to upload file.</example>
+    /// <example>Unable to upload a file.</example>
     public string Message { get; set; }
+
+    /// <summary>
+    /// List of messages about files that failed to upload.
+    /// </summary>
+    /// <example>[ "Error uploading file: test.txt. Error: Not found" ]</example>
+    public string[] FailedFiles { get; set; } = [];
 
     /// <summary>
     /// Additional information about the error.

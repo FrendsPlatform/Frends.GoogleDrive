@@ -68,7 +68,7 @@ public class UnitTests
         var result = await Upload.GoogleDrive.Upload(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
         Assert.IsTrue(result.Data.Any(x => x.UploadedFileName.Equals("test-pdf-document.pdf")));
         Assert.IsTrue(result.Data.Any(x => x.UploadedFileName.Equals("test-photograph.jpg")));
     }
@@ -85,7 +85,7 @@ public class UnitTests
         var result = await Upload.GoogleDrive.Upload(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
         Assert.IsTrue(result.Data.Any(x => x.UploadedFileName.Equals("test-pdf-document.pdf")));
         Assert.IsTrue(result.Data.Any(x => x.UploadedFileName.Equals("test-photograph.jpg")));
     }
@@ -97,7 +97,7 @@ public class UnitTests
         var result = await Upload.GoogleDrive.Upload(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
         Assert.IsTrue(result.Data.Any(x => x.UploadedFileName.Equals("test-photograph.jpg")));
     }
 
@@ -108,7 +108,7 @@ public class UnitTests
         var result = await Upload.GoogleDrive.Upload(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
         Assert.IsTrue(result.Data.Any(x => x.UploadedFileName.Equals("test-pdf-document.pdf")));
     }
 
@@ -119,7 +119,7 @@ public class UnitTests
         var result = await Upload.GoogleDrive.Upload(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
         Assert.IsTrue(result.Data.Any(x => x.UploadedFileName.Equals("test-pdf-document.pdf")));
         Assert.IsTrue(result.Data.Any(x => x.UploadedFileName.Equals("test-photograph.jpg")));
     }
@@ -164,7 +164,7 @@ public class UnitTests
         var result = await Upload.GoogleDrive.Upload(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(0, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
     }
 
     [TestMethod]
@@ -183,7 +183,17 @@ public class UnitTests
         options.ThrowErrorOnFailure = false;
         var result = await Upload.GoogleDrive.Upload(input, options, default);
         Assert.IsFalse(result.Success);
+        Assert.IsNotNull(result.Error);
+    }
+
+    [TestMethod]
+    public async Task UploadTest_NoSuchFolder_ContinueOnFailure_true()
+    {
+        input.TargetFolderId = "123";
+        options.ContinueOnFailure = true;
+        var result = await Upload.GoogleDrive.Upload(input, options, default);
+        Assert.IsTrue(result.Success);
         Assert.AreEqual(0, result.Data.Count);
-        Assert.AreEqual(2, result.ErrorMessage.Count);
+        Assert.AreEqual(2, result.Error.FailedFiles.Length);
     }
 }
