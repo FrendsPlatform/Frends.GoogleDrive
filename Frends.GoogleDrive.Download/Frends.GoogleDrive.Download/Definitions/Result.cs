@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Frends.GoogleDrive.Download.Definitions;
 
@@ -18,12 +18,6 @@ public class Result
     /// </summary>
     /// <example>{ { "1rGpAzFfw2zDSk8lRGYDafwkxxtw_N7fY", "test.txt" } }</example>
     public List<DownloadResult> Data { get; set; }
-
-    /// <summary>
-    /// List of error messages.
-    /// </summary>
-    /// <example>{ "Error downloading file: test.txt. Error: Not found" }</example>
-    public List<dynamic> ErrorMessage { get; set; }
 
     /// <summary>
     /// Error that occurred during task execution.

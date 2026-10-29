@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -29,7 +29,7 @@ public static class GoogleDrive
     public static async Task<Result> Download([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
     {
         var resultList = new List<DownloadResult>();
-        var errorList = new List<dynamic>();
+        var errorList = new List<string>();
         DriveService service = null;
 
         try
@@ -84,7 +84,7 @@ public static class GoogleDrive
                     if (result.Status.Equals(Google.Apis.Download.DownloadStatus.Failed))
                     {
                         success = false;
-                        if (options.ThrowErrorOnFailure)
+                        if (!options.ContinueOnFailure)
                             throw new Exception($"Error downloading file: {file.Name}. Error: {result.Exception.Message}");
                         errorList.Add($"Error downloading file: {file.Name}. Error: {result.Exception.Message}");
                     }
@@ -105,10 +105,14 @@ public static class GoogleDrive
 
         return new Result
         {
-            Success = errorList.Count == 0,
+            Success = options.ContinueOnFailure || errorList.Count == 0,
             Data = resultList,
-            ErrorMessage = errorList,
-            Error = null,
+            Error = errorList.Count == 0 ? null : new Error
+            {
+                Message = "One or more files failed to download.",
+                FailedFiles = [.. errorList],
+                AdditionalInfo = null,
+            },
         };
     }
 

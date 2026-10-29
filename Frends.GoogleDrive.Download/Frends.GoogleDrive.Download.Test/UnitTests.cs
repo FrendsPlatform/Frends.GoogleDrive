@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -100,7 +100,7 @@ public class UnitTests
         var result = await GoogleDrive.Download(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
         Assert.IsTrue(result.Data.Any(x => x.DownloadedFilename.Equals("test-pdf-document.pdf")));
         Assert.IsTrue(result.Data.Any(x => x.DownloadedFilename.Equals("test-photograph.jpg")));
         Assert.IsTrue(File.Exists(Path.Combine(destinationFolder, "test-pdf-document.pdf")));
@@ -114,7 +114,7 @@ public class UnitTests
         var result = await GoogleDrive.Download(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(2, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
     }
 
     [TestMethod]
@@ -124,7 +124,7 @@ public class UnitTests
         var result = await GoogleDrive.Download(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
         Assert.IsTrue(result.Data.Any(x => x.DownloadedFilename.Equals("test-photograph.jpg")));
     }
 
@@ -135,7 +135,7 @@ public class UnitTests
         var result = await GoogleDrive.Download(input, options, default);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(0, result.Data.Count);
-        Assert.AreEqual(0, result.ErrorMessage.Count);
+        Assert.IsNull(result.Error);
     }
 
     [TestMethod]
