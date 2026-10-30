@@ -1,10 +1,16 @@
-﻿namespace Frends.GoogleDrive.Download.Definitions;
+namespace Frends.GoogleDrive.Download.Definitions;
 
 /// <summary>
 /// Download result.
 /// </summary>
 public class DownloadResult
 {
+    internal DownloadResult(string downloadedFileId, string downloadedFilename)
+    {
+        DownloadedFileId = downloadedFileId;
+        DownloadedFilename = downloadedFilename;
+    }
+
     /// <summary>
     /// Downloaded file's Id in the Google Drive.
     /// </summary>
@@ -16,10 +22,4 @@ public class DownloadResult
     /// </summary>
     /// <example>test.txt</example>
     public string DownloadedFilename { get; private set; }
-
-    internal DownloadResult(string downloadedFileId, string downloadedFilename)
-    {
-        DownloadedFileId = downloadedFileId;
-        DownloadedFilename = downloadedFilename;
-    }
 }
